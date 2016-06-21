@@ -66,7 +66,7 @@ let build_lib host : unit =
   in
 
   let ocamlc ?c ?dsource ?impl files =
-    OCaml.ocamlfind_ocamlc files
+    OCaml.ocamlfind_ocamlc files ?c ?dsource ?impl
       ?annot ?bin_annot ?g ?safe_string ?short_paths ?thread ?w
       ~pathI:[lib.Project.dir]
       ~package:lib.Project.findlib_deps
@@ -111,8 +111,6 @@ let build_lib host : unit =
   )
 ;;
 
-
-;;
 let () = Ocamlbuild_plugin.dispatch @@ function
 | Ocamlbuild_plugin.After_rules -> (
     Ocamlbuild_plugin.clear_rules();
