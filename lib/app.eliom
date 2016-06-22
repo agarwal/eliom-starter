@@ -20,7 +20,6 @@ let () = Mysite_app.register
        Lwt.return
          (Eliom_tools.F.html
             ~title:"mysite"
-            ~css:[["css";"mysite.css"]]
             Html5.F.(body [
               h2 [pcdata (sprintf "X = %d" B.b)];
             ] )
