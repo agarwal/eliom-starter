@@ -65,8 +65,8 @@ let build_lib host : unit =
     Project.file_base_of_module lib
   in
 
-  let ocamlc ?c ?dsource ?impl files =
-    OCaml.ocamlfind_ocamlc files ?c ?dsource ?impl
+  let ocamlc ?c ?a ?dsource ?impl ?o ?linkpkg files =
+    OCaml.ocamlfind_ocamlc files ?c ?a ?dsource ?impl ?o ?linkpkg
       ?annot ?bin_annot ?g ?safe_string ?short_paths ?thread ?w
       ~pathI:[lib.Project.dir]
       ~package:lib.Project.findlib_deps
@@ -103,11 +103,22 @@ let build_lib host : unit =
   (match host with
    | `Server -> ()
    | `Client ->
-     let dep = Project.path_of_lib lib ~suffix:".cma" in
-     let prod = Project.path_of_lib lib ~suffix:".js" in
-     Rule.rule ~deps:[dep] ~prods:[prod] (fun _ _ ->
-       OCaml.js_of_ocaml ~o:prod [] dep
-     )
+     (
+       let cma = Project.path_of_lib lib ~suffix:".cma" in
+       let byte = Project.path_of_lib lib ~suffix:".byte" in
+       let js = Project.path_of_lib lib ~suffix:".js" in
+
+       Rule.rule ~deps:[cma] ~prods:[byte] (fun _ _ ->
+         ocamlc ~o:byte [cma]
+       );
+
+       Rule.rule ~deps:[byte] ~prods:[js] (fun _ _ ->
+         OCaml.js_of_ocaml ~o:js
+           ["+weak.js"; "+eliom/client/eliom_client.js"] byte
+       )
+
+     );
+
   )
 ;;
 
