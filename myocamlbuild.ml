@@ -1,6 +1,5 @@
 open Printf
 open Solvuu_build.Std
-open Solvuu_build.Std.Tools
 open Solvuu_build.Util
 open Solvuu_build.Util.Filename
 let (/) = Filename.concat
@@ -49,18 +48,30 @@ let build_lib host : unit =
   let pathI = [outdir/"lib"] in
   mkdir ("_build"/outdir/"lib");
 
-  let ocamlc = ocamlfind_ocamlc
-      ?annot ?bin_annot ?g ?safe_string ?short_paths ?thread ?w
-      ~package ~pathI
+  (* let ocamlc = ocamlfind_ocamlc *)
+  (*     ?annot ?bin_annot ?g ?safe_string ?short_paths ?thread ?w *)
+  (*     ~package ~pathI *)
+  (* in *)
+
+  let compile ?c ?a ?o ?for_pack ?pack ?linkall files =
+    match host with
+    | `Server ->
+      Tools.eliomc ?c ?a ?o ?for_pack ?pack ?linkall files
+        ?annot ?bin_annot ?g ?safe_string ?short_paths ?thread ?w
+        ~package ~pathI ~ppx:()
+    | `Client ->
+      Tools.js_of_eliom ?c ?a ?o ?for_pack ?pack ?linkall:None ?linkall files
+        ?annot ?bin_annot ?g ?safe_string ?short_paths ?thread ?w
+        ~package ~pathI ~ppx:()
   in
 
-  let run_ocamldep = run_ocamlfind_ocamldep
+  let run_ocamldep = Tools.run_ocamlfind_ocamldep
       ~ml_synonym:".eliom"
       ~mli_synonym:".eliomi"
       ~package ~pathI:["lib"]
   in
 
-  let run_ocamldep_sort = run_ocamlfind_ocamldep_sort
+  let run_ocamldep_sort = Tools.run_ocamlfind_ocamldep_sort
       ~ml_synonym:".eliom"
       ~mli_synonym:".eliomi"
       ~package ~pathI:["lib"]
@@ -104,11 +115,7 @@ let build_lib host : unit =
        Rule.rule ~deps:[eliom] ~prods:[prod] (fun _ build ->
          build_deps build eliom;
 
-         (* TODO: replace [eliomc -infer] with [ocamlc -i]. Shouldn't
-            be too hard, but have to remove the invalid underscore
-            characters printed by ocamlc. See
-            https://github.com/ocsigen/eliom/blob/master/src/tools/eliomc.ml#L202. *)
-         eliomc ~infer:() ~o:prod [eliom]
+         Tools.eliomc ~infer:() ~o:prod [eliom]
            ~package:["eliom.ppx.type"]
            ?annot ?bin_annot ?g ?safe_string ?short_paths ?thread ?w
            ~pathI ~ppx:()
@@ -124,7 +131,7 @@ let build_lib host : unit =
       let cmi = outdir/(base^".cmi") in
       Rule.rule ~deps:[mli] ~prods:[cmi] (fun _ build ->
         build_deps build mli;
-        ocamlc ~c:() ~o:cmi ~for_pack [mli]
+        compile ~c:() ~o:cmi ~for_pack [mli]
       )
     )
     else if check_suffix x ".eliomi" then (
@@ -132,7 +139,7 @@ let build_lib host : unit =
       let cmi = outdir/(base^".cmi") in
       Rule.rule ~deps:[eliomi] ~prods:[cmi] (fun _ build ->
         build_deps build eliomi;
-        ocamlc ~c:() ~o:cmi ~for_pack ~impl:eliomi []
+        compile ~c:() ~o:cmi ~for_pack [eliomi]
       )
     )
     else if check_suffix x ".ml" then (
@@ -140,7 +147,7 @@ let build_lib host : unit =
       let cmo = outdir/(base^".cmo") in
       Rule.rule ~deps:[ml] ~prods:[cmo] (fun _ build ->
         build_deps build ml;
-        ocamlc ~c:() ~o:cmo ~for_pack [ml]
+        compile ~c:() ~o:cmo ~for_pack [ml]
       )
     )
     else if check_suffix x ".eliom" then (
@@ -149,13 +156,13 @@ let build_lib host : unit =
       let type_mli = outdir_server/(base ^ ".type_mli") in
       Rule.rule ~deps:[eliom;type_mli] ~prods:[cmo] (fun _ build ->
         build_deps build eliom;
-        let ppxopt =
-          let opt = sprintf "-type %s" type_mli in
-          match host with
-          | `Client -> ["eliom.ppx.client",opt]
-          | `Server -> ["eliom.ppx.server",opt]
-        in
-        ocamlc ~c:() ~ppxopt ~o:cmo ~for_pack ~impl:eliom []
+        (* let ppxopt = *)
+        (*   let opt = sprintf "-type %s" type_mli in *)
+        (*   match host with *)
+        (*   | `Client -> ["eliom.ppx.client",opt] *)
+        (*   | `Server -> ["eliom.ppx.server",opt] *)
+        (* in *)
+        compile ~c:() ~o:cmo ~for_pack [eliom]
       )
     )
     else
@@ -178,7 +185,7 @@ let build_lib host : unit =
         List.map cmos ~f:(fun x -> [x]) |>
         build |> assert_all_outcomes |> ignore
       );
-      ocamlc ~pack:() ~o:prod cmos
+      compile ~pack:() ~o:prod cmos
     )
   );
 
@@ -188,7 +195,7 @@ let build_lib host : unit =
     let cmo = base^".cmo" in
     let cma = base^".cma" in
     Rule.rule ~deps:[cmo] ~prods:[cma] (fun _ _ ->
-      ocamlc ~a:() ~o:cma [cmo]
+      compile ~a:() ~linkall:() ~o:cma [cmo]
     )
   );
 
@@ -198,14 +205,13 @@ let build_lib host : unit =
    | `Client ->
      let base = outdir/project_name in
      let cma = base^".cma" in
-     let byte = base^".byte" in
+     (* let byte = base^".byte" in *)
      let js = base^".js" in
 
-     Rule.rule ~deps:[cma] ~prods:[byte] (fun _ _ -> ocamlc ~o:byte [cma]);
+     (* Rule.rule ~deps:[cma] ~prods:[byte] (fun _ _ -> compile ~o:byte [cma]); *)
 
-     Rule.rule ~deps:[byte] ~prods:[js] (fun _ _ ->
-       js_of_ocaml ~o:js
-         ["+weak.js"; "+eliom/client/eliom_client.js"] byte
+     Rule.rule ~deps:[cma] ~prods:[js] (fun _ _ ->
+       compile ~linkall:() ~o:js [cma]
      )
   );
 

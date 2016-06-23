@@ -1,11 +1,16 @@
-This is a temporary project to test out a new build system for Eliom
-projects. The goal is to avoid all of the eliom command line tools,
-which are just wrappers around underling ocaml tools.
+This is a temporary project to experiment with a new build script for Eliom. The project can be compiled in two ways:
 
-The main work of this repo is in `myocamlbuild.ml`. It makes use of
-`solvuu_build`, which will need to be installed by doing:
+* Do `make run-site`. The Makefile has hand written rules, so we can
+  easily see the affect of small changes. However, this file doesn't
+  scale to larger projects, e.g. there is no call to `eliomdep` to
+  automatically figure out the order in which to compile different
+  modules.
 
-    opam pin add solvuu_build https://github.com/solvuu/solvuu_build.git
+* Do `make -f Makefile.ocamlbuild run-site`. This will make use the
+  `myocamlbuild.ml` plugin. This makes use of `solvuu_build`, which
+  will need to be installed by doing:
 
-Then, you can try `make run-site`. This should compile and run the
-ocsigen site at [http://localhost:8082](http://localhost:8082).
+      opam pin add solvuu_build https://github.com/solvuu/solvuu_build.git
+
+In both cases, the site should be running at
+[http://localhost:8082](http://localhost:8082).
