@@ -1,27 +1,47 @@
 [%%shared
     open Printf
     open Eliom_lib
-    open Eliom_content
-    open Html5.D
 ]
 
-module Mysite_app =
+module Mysite =
   Eliom_registration.App (
   struct
-      let application_name = "mysite"
+    let application_name = "mysite"
   end)
 
-let main_service =
-  Eliom_service.App.service ~path:[] ~get_params:Eliom_parameter.unit ()
-
-let () = Mysite_app.register
-    ~service:main_service
+let _ = Mysite.register_service
+    ~path:[]
+    ~get_params:Eliom_parameter.unit
     (fun () () ->
        Lwt.return
          (Eliom_tools.F.html
             ~title:"mysite"
-            Html5.F.(body [
+            Eliom_content.Html5.F.(body [
               h2 [pcdata (sprintf "X = %d" B.b)];
             ] )
+         )
+    )
+
+let _ = Mysite.register_service
+    ~path:["a"]
+    ~get_params:Eliom_parameter.unit
+    (fun () () ->
+       let open Eliom_content.Html5.D in
+       let input = input ~a:[a_input_type `Text] () in
+       let onclick_handler = [%client (fun _ ->
+            let v =
+              Js.to_string
+                (Eliom_content.Html5.To_dom.of_input ~%input)##.value
+            in
+            Dom_html.window##alert(Js.string ("Input value :" ^ v)))
+       ]
+       in
+       let button =
+         button ~a:[a_onclick onclick_handler] [pcdata "Read value"]
+       in
+       Lwt.return
+         (html
+            (head (title (pcdata "Test")) [])
+            (body [input; button])
          )
     )

@@ -1,8 +1,7 @@
 B +threads
+S lib
 B _build/_server
 B _build/_server/lib
 PKG eliom.ppx.server
 PKG eliom.server
 PKG solvuu_build
-S _client/lib
-S _server/lib
