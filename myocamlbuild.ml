@@ -26,8 +26,8 @@ let files = function
     )
 
 let packages = function
-  | `Server -> ["eliom.server"; "eliom.ppx.server"]
-  | `Client -> ["eliom.client"; "eliom.ppx.client"; "js_of_ocaml.ppx"]
+  | `Server -> ["eliom.server"]
+  | `Client -> ["eliom.client"; "js_of_ocaml.ppx"]
 
 let outdir = function
   | `Server -> "_server"
@@ -100,7 +100,11 @@ let build_lib host : unit =
     | None ->
       failwithf "ocamldep on %s gave no results for %s" x y ()
     | Some l ->
-      List.map l ~f:(fun x -> [outdir/x]) |>
+      let set = List.map files ~f:chop_extension in
+      List.filter l ~f:(fun x -> List.mem ~set (chop_extension x)) |>
+      List.map ~f:(fun x -> outdir/x) |> fun l ->
+      printf "dependencies of %s: %s\n" (outdir/y) (String.concat ~sep:"," l);
+      List.map l ~f:(fun x -> [x]) |>
       build |> assert_all_outcomes |> ignore
   in
 
@@ -181,6 +185,9 @@ let build_lib host : unit =
         List.filter ~f:(List.mem ~set:files) |>
         List.map ~f:(fun x -> outdir/((chop_extension x)^".cmo"))
       in
+      printf "sorted dependencies of %s: %s\n"
+        prod (String.concat ~sep:"," cmos)
+      ;
       (
         List.map cmos ~f:(fun x -> [x]) |>
         build |> assert_all_outcomes |> ignore
