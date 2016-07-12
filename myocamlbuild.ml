@@ -16,22 +16,20 @@ let thread = Some ()
 let w = Some "A-4-33-41-42-44-45-48"
 
 let files = function
-  | `Server -> (
-      ["a.ml";"b.ml";"b.mli";"app.eliom"] |>
-      List.map ~f:(fun x -> "lib"/x)
-    )
-  | `Client -> (
-      ["app.eliom"] |>
-      List.map ~f:(fun x -> "lib"/x)
-    )
+  | `Server ->
+    ["a.ml";"b.ml";"b.mli";"app.eliom"] |> List.map ~f:(fun x -> "lib"/x)
+  | `Client ->
+    ["app.eliom"] |> List.map ~f:(fun x -> "lib"/x)
 
+
+(* WARNING: Do not add eliom.ppx.server or eliom.ppx.client when using
+   eliom's command line tools. They add these packages automatically
+   and adding them again causes runtime errors. *)
 let packages = function
   | `Server -> ["eliom.server"]
   | `Client -> ["eliom.client"; "js_of_ocaml.ppx"]
 
-let outdir = function
-  | `Server -> "_server"
-  | `Client -> "_client"
+let outdir = function `Server -> "_server" | `Client -> "_client"
 
 let mkdir dir =
   let cmd = sprintf "mkdir -p %s" dir in
@@ -48,11 +46,6 @@ let build_lib host : unit =
   let pathI = [outdir/"lib"] in
   mkdir ("_build"/outdir/"lib");
 
-  (* let ocamlc = ocamlfind_ocamlc *)
-  (*     ?annot ?bin_annot ?g ?safe_string ?short_paths ?thread ?w *)
-  (*     ~package ~pathI *)
-  (* in *)
-
   let compile ?c ?a ?o ?for_pack ?pack ?linkall files =
     match host with
     | `Server ->
@@ -65,16 +58,11 @@ let build_lib host : unit =
         ~package ~pathI ~ppx:()
   in
 
-  let run_ocamldep = Tools.run_ocamlfind_ocamldep
-      ~ml_synonym:".eliom"
-      ~mli_synonym:".eliomi"
-      ~package ~pathI:["lib"]
+  let run_eliomdep = Tools.run_eliomdep host
+      ~package ~pathI:["lib"] ~ppx:()
   in
-
-  let run_ocamldep_sort = Tools.run_ocamlfind_ocamldep_sort
-      ~ml_synonym:".eliom"
-      ~mli_synonym:".eliomi"
-      ~package ~pathI:["lib"]
+  let run_eliomdep_sort = Tools.run_eliomdep_sort host
+      ~package ~pathI:["lib"] ~ppx:()
   in
 
   (* Return main target resulting from compiling given file [x]. *)
@@ -95,15 +83,17 @@ let build_lib host : unit =
   let build_deps build x =
     assert_source_files build;
     let y = target x in
-    run_ocamldep [x] |> fun l ->
+    run_eliomdep [x] |> fun l ->
     match List.Assoc.find l y with
     | None ->
-      failwithf "ocamldep on %s gave no results for %s" x y ()
+      failwithf "eliomdep on %s gave no results for %s" x y ()
     | Some l ->
       let set = List.map files ~f:chop_extension in
       List.filter l ~f:(fun x -> List.mem ~set (chop_extension x)) |>
       List.map ~f:(fun x -> outdir/x) |> fun l ->
-      printf "dependencies of %s: %s\n" (outdir/y) (String.concat ~sep:"," l);
+      printf "dynamic dependencies of %s: %s\n"
+        (outdir/y) (String.concat ~sep:"," l)
+      ;
       List.map l ~f:(fun x -> [x]) |>
       build |> assert_all_outcomes |> ignore
   in
@@ -120,7 +110,7 @@ let build_lib host : unit =
          build_deps build eliom;
 
          Tools.eliomc ~infer:() ~o:prod [eliom]
-           ~package:["eliom.ppx.type"]
+           ~package:("eliom.ppx.type"::package)
            ?annot ?bin_annot ?g ?safe_string ?short_paths ?thread ?w
            ~pathI ~ppx:()
        )
@@ -160,12 +150,6 @@ let build_lib host : unit =
       let type_mli = outdir_server/(base ^ ".type_mli") in
       Rule.rule ~deps:[eliom;type_mli] ~prods:[cmo] (fun _ build ->
         build_deps build eliom;
-        (* let ppxopt = *)
-        (*   let opt = sprintf "-type %s" type_mli in *)
-        (*   match host with *)
-        (*   | `Client -> ["eliom.ppx.client",opt] *)
-        (*   | `Server -> ["eliom.ppx.server",opt] *)
-        (* in *)
         compile ~c:() ~o:cmo ~for_pack [eliom]
       )
     )
@@ -181,11 +165,11 @@ let build_lib host : unit =
         List.filter files ~f:(
           fun x -> check_suffix x ".ml" || check_suffix x ".eliom"
         ) |>
-        run_ocamldep_sort |>
+        run_eliomdep_sort |>
         List.filter ~f:(List.mem ~set:files) |>
         List.map ~f:(fun x -> outdir/((chop_extension x)^".cmo"))
       in
-      printf "sorted dependencies of %s: %s\n"
+      printf "dynamic sorted dependencies of %s: %s\n"
         prod (String.concat ~sep:"," cmos)
       ;
       (
@@ -212,18 +196,13 @@ let build_lib host : unit =
    | `Client ->
      let base = outdir/project_name in
      let cma = base^".cma" in
-     (* let byte = base^".byte" in *)
      let js = base^".js" in
-
-     (* Rule.rule ~deps:[cma] ~prods:[byte] (fun _ _ -> compile ~o:byte [cma]); *)
-
      Rule.rule ~deps:[cma] ~prods:[js] (fun _ _ ->
        compile ~linkall:() ~o:js [cma]
      )
-  );
+  )
 
 ;;
-
 let () = Ocamlbuild_plugin.dispatch @@ function
 | Ocamlbuild_plugin.After_rules -> (
     Ocamlbuild_plugin.clear_rules();
