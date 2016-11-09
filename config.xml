@@ -9,11 +9,10 @@
     <extension findlib-package="ocsigenserver.ext.ocsipersist-sqlite"/>
     <extension findlib-package="eliom.server"/>
 
-    <host>
+    <host defaulthostname="localhost">
       <static dir="_build/_site/" />
       <eliom xhr-links="no" module="_build/_server/eliom-starter.cma">
       </eliom>
-      <eliom/>
     </host>
 
   </server>
