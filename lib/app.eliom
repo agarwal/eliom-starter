@@ -1,37 +1,40 @@
 [%%shared
-    open Printf
-    open Eliom_lib
+open Lwt
+open Printf
+open Eliom_lib
 ]
 
-module Mysite =
-  Eliom_registration.App (
+include Eliom_registration.App (
   struct
-    let application_name = "mysite"
+    let application_name = "app"
+    let global_data_path = None
   end)
 
-let _ = Mysite.register_service
-    ~path:[]
-    ~get_params:Eliom_parameter.unit
+let _ = Eliom_registration.Html.create
+    ~path:(Eliom_service.Path [])
+    ~meth:(Eliom_service.Get Eliom_parameter.unit)
     (fun () () ->
+       let open Eliom_content.Html.F in
        Lwt.return
-         (Eliom_tools.F.html
-            ~title:"mysite"
-            Eliom_content.Html5.F.(body [
-              h2 [pcdata (sprintf "X = %d" B.b)];
-            ] )
+         (html
+            (head (title @@ pcdata "mysite") [])
+            (body [
+               h2 [pcdata (sprintf "X = %d" B.b)];
+             ]
+            )
          )
     )
 
-let _ = Mysite.register_service
-    ~path:["a"]
-    ~get_params:Eliom_parameter.unit
+let _ = Eliom_registration.Html.create
+    ~path:(Eliom_service.Path ["a"])
+    ~meth:(Eliom_service.Get Eliom_parameter.unit)
     (fun () () ->
-       let open Eliom_content.Html5.D in
+       let open Eliom_content.Html.D in
        let input = input ~a:[a_input_type `Text] () in
        let onclick_handler = [%client (fun _ ->
             let v =
               Js.to_string
-                (Eliom_content.Html5.To_dom.of_input ~%input)##.value
+                (Eliom_content.Html.To_dom.of_input ~%input)##.value
             in
             Dom_html.window##alert(Js.string ("Input value :" ^ v)))
        ]

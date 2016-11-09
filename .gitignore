@@ -1,3 +1,8 @@
 /_build
-/_site
+/_cache
+/node_modules
+/_var
+/npm-debug.log
+.sass-cache
 /tmp
+.DS_Store

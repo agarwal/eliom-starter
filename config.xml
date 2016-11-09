@@ -2,17 +2,17 @@
   <server>
     <debugmode/>
     <port protocol="HTTP">8082</port>
-    <logdir>_site/var/log</logdir>
-    <datadir>_site/var/data</datadir>
+    <logdir>_var/log</logdir>
+    <datadir>_var/data</datadir>
     <charset>utf-8</charset>
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
     <extension findlib-package="ocsigenserver.ext.ocsipersist-sqlite"/>
     <extension findlib-package="eliom.server"/>
 
     <host>
-      <static dir="_site/static/" />
-      <eliommodule module="_build/_server/mysite.cma">
-      </eliommodule>
+      <static dir="_build/_site/" />
+      <eliom xhr-links="no" module="_build/_server/eliom-starter.cma">
+      </eliom>
       <eliom/>
     </host>
 
