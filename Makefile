@@ -21,6 +21,7 @@ node-sass=node_modules/.bin/node-sass
 site: \
   _build/_site/css/foundation-icons.css \
   _build/_site/css/$(APP_NAME).css \
+  _build/_site/js/app-deps.min.js \
   _build/_site/$(APP_NAME).js \
   _build/_server/$(PROJECT_NAME).cma
 
@@ -46,14 +47,15 @@ _build/_site/css/$(APP_NAME).css: \
 
 ################################################################################
 # JavaScript
-_build/_site/$(APP_NAME).js: \
+_build/_site/js/app-deps.min.js: \
   node_modules/babel-cli \
   node_modules/foundation-sites \
-  _build/_client/$(PROJECT_NAME).js \
-  | _build/_site
+  | _build/_site/js
 	$(babel) -o $@ --minified \
-          node_modules/foundation-sites/dist/foundation.js \
-          _build/_client/$(PROJECT_NAME).js
+          node_modules/foundation-sites/dist/foundation.js
+
+_build/_site/$(APP_NAME).js: _build/_client/$(PROJECT_NAME).js | _build/_site
+	cp -f $< $@
 
 
 ################################################################################
