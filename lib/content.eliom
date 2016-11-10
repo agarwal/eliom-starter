@@ -81,7 +81,7 @@ let front_page () () =
     Html.F.(
       div ~a:[a_class ["row"]] [
         div ~a:[a_class ["small-12"; "columns"]] [
-          h2 [pcdata (Printf.sprintf "X = %d" B.b)]
+          h2 [pcdata (Printf.sprintf "X = %d" 42)]
         ]
       ]
     )

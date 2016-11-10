@@ -16,7 +16,7 @@ let dir = "lib"
 let ml_files = function
   | `Server ->
     [
-      "a.ml";"b.ml";"app.eliom";
+      "app.eliom";
       "content.eliom";
       "registration.ml";
       "service.ml";
@@ -29,7 +29,7 @@ let ml_files = function
 
 let mli_files = function
   | `Server ->
-    ["b.mli"]
+    []
   | `Client ->
     []
 
