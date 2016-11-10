@@ -3,6 +3,11 @@ open Eliom_parameter
 include Eliom_service
 
 let home = create ~path:(Path []) ~meth:(Get unit) ()
+let users = create ~path:(Path ["users"]) ~meth:(Get unit) ()
+
+let add_user = create ~path:No_path
+    ~meth:(Post (unit, string "username" ** string "password"))
+    ()
 
 let github = extern ~prefix:"https://github.com"
     ~path:["agarwal"; "eliom-starter"]

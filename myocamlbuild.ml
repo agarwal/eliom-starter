@@ -20,6 +20,7 @@ let ml_files = function
       "content.eliom";
       "registration.ml";
       "service.ml";
+      "user.ml";
     ]
   | `Client ->
     [

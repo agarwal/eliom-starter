@@ -1,6 +1,7 @@
 [%%shared
 open Lwt
 open Eliom_content
+open Printf
 ]
 
 (* For dev usage. Quickly create a dummy link with given text. *)
@@ -58,7 +59,7 @@ let template ~title:title_str content =
   let top_bar_right =
     div ~a:[a_class ["top-bar-right"]] [
       ul ~a:[a_class ["menu"]] [
-        li [a ~service:Service.home [pcdata "Menu Item"] ()];
+        li [a ~service:Service.users [pcdata "Users"] ()];
       ]
     ]
   in
@@ -120,13 +121,53 @@ let read_and_display_input =
     ]
   ]
 
+let add_user_form (username_name, password_name) =
+  let open Eliom_content.Html.D in
+  [
+    column_12 [h2 [pcdata "create new user"]];
+    div ~a:[a_class ["row"]] [
+      div ~a:[a_class ["small-6"; "columns"]] [
+        div [
+          pcdata "Username: ";
+          Form.input ~input_type:`Text ~name:username_name Form.string;
+
+          pcdata "Password: ";
+          Form.input ~input_type:`Text ~name:password_name Form.string;
+
+          Form.input ~input_type:`Submit ~value:"Add User" Form.string
+            ~a:[a_class ["button"]; Unsafe.string_attrib "type" "submit"]
+        ]
+      ]
+    ]
+  ]
+
 let front_page () () =
   let open Eliom_content.Html.F in
   return @@ template ~title:"Eliom Starter"
     [
       column_12 [h1 [pcdata "Demos"]];
-      column_12 [
-        p [pcdata "Examples of event handlers."]
-      ];
       read_and_display_input;
+      Eliom_content.Html.D.Form.post_form ~service:Service.add_user add_user_form ();
+    ]
+
+(******************************************************************************)
+(** {2 Users Page} *)
+(******************************************************************************)
+let users () () =
+  let open Eliom_content.Html.F in
+  User.all_users () >|=
+  List.map (fun (username,password) ->
+    tr [td [pcdata username]; td [pcdata password]]
+  ) >>= fun rows ->
+  return @@ table
+    ((tr [th [pcdata "Username"]; th [pcdata "Password"]])::rows)
+  >|= fun users ->
+  template ~title:"Users"
+    [
+      column_12 [h1 [pcdata "Users"]];
+      div ~a:[a_class ["row"]] [
+        div ~a:[a_class ["small-6"; "columns"]] [
+          users
+        ]
+      ]
     ]
