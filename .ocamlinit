@@ -5,3 +5,10 @@ let () =
 
 #use "topfind";;
 #thread;;
+
+#require "lwt lwt.preemptive";;
+
+#require "ocsigenserver ocsigenserver.baselib ocsigenserver.baselib.base ocsigenserver.commandline ocsigenserver.cookies ocsigenserver.ext ocsigenserver.ext.accesscontrol ocsigenserver.ext.authbasic ocsigenserver.ext.cgimod ocsigenserver.ext.comet ocsigenserver.ext.cors ocsigenserver.ext.extendconfiguration ocsigenserver.ext.outputfilter ocsigenserver.ext.redirectmod ocsigenserver.ext.revproxy ocsigenserver.ext.rewritemod ocsigenserver.ext.staticmod ocsigenserver.ext.userconf ocsigenserver.http ocsigenserver.polytables ocsigenserver.ext.ocsipersist-sqlite eliom.server"
+
+#directory "_build/_server";;
+#load "eliom-starter.cma";;
