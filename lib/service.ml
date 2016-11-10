@@ -17,3 +17,4 @@ let github = extern ~prefix:"https://github.com"
 let jquery = extern ~prefix:"https://ajax.googleapis.com"
     ~path:["ajax"; "libs"; "jquery"; "2.2.4"; "jquery.min.js"]
     ~meth:(Get unit)
+    ()

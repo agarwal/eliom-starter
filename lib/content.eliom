@@ -80,7 +80,7 @@ let template ~title:title_str content =
   in
   let end_matter =
     [
-      js_script ~uri:(Xml.uri_of_string jquery_src) ();
+      js_script ~uri:(make_uri ~service:Service.jquery ()) ();
       js_script ~uri:(Xml.uri_of_string "/js/app-deps.min.js") ();
       Raw.script (pcdata "$(document).foundation();");
     ]
