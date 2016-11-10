@@ -9,8 +9,15 @@ let a_dummy x = Html.F.(a ~service:Service.home [pcdata x] ())
 let jquery_src =
   "https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"
 
+let column_12 x =
+  let open Html.F in
+  div ~a:[a_class ["row"]] [
+    div ~a:[a_class ["small-12"; "columns"]]
+      x
+  ]
+
 (******************************************************************************)
-(** {2 Template}*)
+(** {2 Template} *)
 (******************************************************************************)
 let template ~title:title_str content =
   let open Html.F in
@@ -27,10 +34,18 @@ let template ~title:title_str content =
           a_name "viewport";
           a_content "width=device-width,initial-scale=1.0";
         ];
-        link () ~rel:[`Stylesheet]
-          ~href:(Xml.uri_of_string "/css/app.css");
-        link () ~rel:[`Stylesheet]
-          ~href:(Xml.uri_of_string "/css/foundation-icons.css");
+
+        css_link
+          ~uri:(make_uri ~service:(Service.static_dir ())
+                  ["css"; "app.css"])
+          ()
+        ;
+
+        css_link
+          ~uri:(make_uri ~service:(Service.static_dir ())
+                  ["css"; "foundation-icons.css"])
+          ()
+        ;
       ]
   in
   let top_bar_left =
@@ -43,7 +58,7 @@ let template ~title:title_str content =
   let top_bar_right =
     div ~a:[a_class ["top-bar-right"]] [
       ul ~a:[a_class ["menu"]] [
-        li [a ~service:Service.button [pcdata "Button"] ()];
+        li [a ~service:Service.home [pcdata "Menu Item"] ()];
       ]
     ]
   in
@@ -74,21 +89,9 @@ let template ~title:title_str content =
     (body @@ [top_bar]@content@[footer]@end_matter)
 
 (******************************************************************************)
-(** {2 Pages}*)
+(** {2 Front Page} *)
 (******************************************************************************)
-let front_page () () =
-  let content =
-    Html.F.(
-      div ~a:[a_class ["row"]] [
-        div ~a:[a_class ["small-12"; "columns"]] [
-          h2 [pcdata (Printf.sprintf "X = %d" 42)]
-        ]
-      ]
-    )
-  in
-  return @@ template ~title:"Front Page" [content]
-
-let button_page () () =
+let read_and_display_input =
   let open Eliom_content.Html.D in
   let input = input ~a:[a_input_type `Text] () in
   let onclick_handler = [%client (fun _ ->
@@ -96,7 +99,7 @@ let button_page () () =
       Js.to_string
         (Html.To_dom.of_input ~%input)##.value
     in
-    Dom_html.window##alert(Js.string ("Input value :" ^ v)))
+    Dom_html.window##alert(Js.string ("Input value: " ^ v)))
   ]
   in
   let button =
@@ -108,19 +111,22 @@ let button_page () () =
       ]
       [pcdata "Read value"]
   in
-  let content =
-    [
-      div ~a:[a_class ["row"]] [
-        div ~a:[a_class ["small-12"; "columns"]] [
-          h1 [pcdata "Button"];
-        ]
-      ];
-
-      div ~a:[a_class ["row"]] [
-        div ~a:[a_class ["small-6"; "columns"]] [
-          form [input; button]
-        ]
-      ];
+  div [
+    column_12 [h2 [pcdata "onclick handler"]];
+    div ~a:[a_class ["row"]] [
+      div ~a:[a_class ["small-4"; "columns"]] [input];
+      div ~a:[a_class ["small-2"; "columns"]] [button];
+      div ~a:[a_class ["small-6"; "columns"]] [];
     ]
-  in
-  return @@ template ~title:"Button" content
+  ]
+
+let front_page () () =
+  let open Eliom_content.Html.F in
+  return @@ template ~title:"Eliom Starter"
+    [
+      column_12 [h1 [pcdata "Demos"]];
+      column_12 [
+        p [pcdata "Examples of event handlers."]
+      ];
+      read_and_display_input;
+    ]
