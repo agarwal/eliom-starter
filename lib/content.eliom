@@ -4,12 +4,6 @@ open Eliom_content
 open Printf
 ]
 
-(* For dev usage. Quickly create a dummy link with given text. *)
-let a_dummy x = Html.F.(a ~service:Service.home [pcdata x] ())
-
-let jquery_src =
-  "https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"
-
 let column_12 x =
   let open Html.F in
   div ~a:[a_class ["row"]] [
